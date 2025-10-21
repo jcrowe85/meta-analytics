@@ -30,11 +30,11 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
       searchText: '',
       dateRange: { start: '', end: '' },
       performanceScore: { min: 0, max: 100 },
-      spend: { min: 0, max: 10000 },
-      roas: { min: 0, max: 20 },
-      ctr: { min: 0, max: 10 },
-      clicks: { min: 0, max: 10000 },
-      conversions: { min: 0, max: 1000 },
+      spend: { min: 0, max: 100000 },
+      roas: { min: 0, max: 100 },
+      ctr: { min: 0, max: 100 },
+      clicks: { min: 0, max: 100000 },
+      conversions: { min: 0, max: 10000 },
       sortBy: 'performance',
       sortOrder: 'desc',
       status: 'all',
@@ -50,15 +50,15 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
     filters.performanceScore.min > 0 ||
     filters.performanceScore.max < 100 ||
     filters.spend.min > 0 ||
-    filters.spend.max < 10000 ||
+    filters.spend.max < 100000 ||
     filters.roas.min > 0 ||
-    filters.roas.max < 20 ||
+    filters.roas.max < 100 ||
     filters.ctr.min > 0 ||
-    filters.ctr.max < 10 ||
+    filters.ctr.max < 100 ||
     filters.clicks.min > 0 ||
-    filters.clicks.max < 10000 ||
+    filters.clicks.max < 100000 ||
     filters.conversions.min > 0 ||
-    filters.conversions.max < 1000 ||
+    filters.conversions.max < 10000 ||
     filters.status !== 'all' ||
     filters.showTopPerformers ||
     filters.showLowPerformers;
@@ -233,8 +233,8 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
             label="Spend"
             value={filters.spend}
             min={0}
-            max={10000}
-            step={10}
+            max={100000}
+            step={100}
             format={(v) => `$${v.toLocaleString()}`}
             onChange={(range) => updateFilter('spend', range)}
           />
@@ -244,8 +244,8 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
             label="ROAS"
             value={filters.roas}
             min={0}
-            max={20}
-            step={0.1}
+            max={100}
+            step={1}
             format={(v) => `${v.toFixed(1)}x`}
             onChange={(range) => updateFilter('roas', range)}
           />
@@ -255,8 +255,8 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
             label="CTR"
             value={filters.ctr}
             min={0}
-            max={10}
-            step={0.1}
+            max={100}
+            step={1}
             format={(v) => `${v.toFixed(1)}%`}
             onChange={(range) => updateFilter('ctr', range)}
           />
@@ -266,8 +266,8 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
             label="Clicks"
             value={filters.clicks}
             min={0}
-            max={10000}
-            step={10}
+            max={100000}
+            step={100}
             format={(v) => v.toLocaleString()}
             onChange={(range) => updateFilter('clicks', range)}
           />
@@ -277,8 +277,8 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
             label="Conversions"
             value={filters.conversions}
             min={0}
-            max={1000}
-            step={1}
+            max={10000}
+            step={10}
             format={(v) => v.toLocaleString()}
             onChange={(range) => updateFilter('conversions', range)}
           />

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FiEye, FiMousePointer, FiDollarSign, FiTrendingUp, FiTarget, FiActivity, FiRefreshCw, FiBarChart, FiCalendar, FiClock, FiInfo } from 'react-icons/fi';
+import { FiEye, FiMousePointer, FiDollarSign, FiTrendingUp, FiTarget, FiActivity, FiRefreshCw, FiBarChart, FiCalendar, FiClock, FiInfo, FiFilter } from 'react-icons/fi';
 import type { AdData, AccountInfo, ApiResponse, SpendData } from '../types';
+import type { AdFilters, defaultFilters } from '../types/filters';
 import InfiniteAdsList from '../components/InfiniteAdsList';
+import Filters from '../components/Filters';
 
 export function Overview() {
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
@@ -62,6 +64,188 @@ export function Overview() {
   
   // Track if any data has loaded to show the page
   const [hasLoadedData, setHasLoadedData] = useState(false);
+  
+  // Filter and sort ads based on current filters
+  const getFilteredAndSortedAds = (ads: AdData[]) => {
+    let filtered = ads.filter((ad) => {
+      // Search text filter
+      if (filters.searchText) {
+        const searchLower = filters.searchText.toLowerCase();
+        const matchesName = ad.name?.toLowerCase().includes(searchLower);
+        const matchesTitle = ad.creative?.title?.toLowerCase().includes(searchLower);
+        const matchesBody = ad.creative?.body?.toLowerCase().includes(searchLower);
+        if (!matchesName && !matchesTitle && !matchesBody) return false;
+      }
+
+      // Date range filter (if using custom date range)
+      if (filters.dateRange.start && ad.created_time) {
+        const adDate = new Date(parseInt(ad.created_time) * 1000).toISOString().split('T')[0];
+        if (adDate < filters.dateRange.start) return false;
+      }
+      if (filters.dateRange.end && ad.created_time) {
+        const adDate = new Date(parseInt(ad.created_time) * 1000).toISOString().split('T')[0];
+        if (adDate > filters.dateRange.end) return false;
+      }
+
+      // Status filter
+      if (filters.status !== 'all') {
+        if (filters.status === 'active' && ad.effective_status !== 'ACTIVE') return false;
+        if (filters.status === 'paused' && ad.effective_status !== 'PAUSED') return false;
+      }
+
+      // Performance score filter
+      if (ad.performance_score !== undefined) {
+        if (ad.performance_score < filters.performanceScore.min || ad.performance_score > filters.performanceScore.max) return false;
+      }
+
+      // Spend filter
+      if (ad.insights?.data?.[0]?.spend !== undefined) {
+        const spend = parseFloat(ad.insights.data[0].spend);
+        if (spend < filters.spend.min || spend > filters.spend.max) return false;
+      }
+
+      // ROAS filter (calculated from spend and action_values)
+      if (ad.insights?.data?.[0]?.spend !== undefined) {
+        const spend = parseFloat(ad.insights.data[0].spend);
+        if (spend > 0) {
+          const actionValues = ad.insights.data[0].action_values || [];
+          const purchaseValues = actionValues.filter(action => 
+            action.action_type.toLowerCase().includes('purchase')
+          );
+          const totalConversionValue = purchaseValues.reduce((sum, action) => 
+            sum + parseFloat(action.value || '0'), 0
+          );
+          const roas = totalConversionValue / spend;
+          if (roas < filters.roas.min || roas > filters.roas.max) return false;
+        }
+      }
+
+      // CTR filter
+      if (ad.insights?.data?.[0]?.ctr !== undefined) {
+        const ctr = parseFloat(ad.insights.data[0].ctr);
+        if (ctr < filters.ctr.min || ctr > filters.ctr.max) return false;
+      }
+
+      // Clicks filter
+      if (ad.insights?.data?.[0]?.clicks !== undefined) {
+        const clicks = parseInt(ad.insights.data[0].clicks);
+        if (clicks < filters.clicks.min || clicks > filters.clicks.max) return false;
+      }
+
+      // Conversions filter (from actions)
+      if (ad.insights?.data?.[0]?.actions !== undefined) {
+        const actions = ad.insights.data[0].actions || [];
+        const purchaseActions = actions.filter(action => 
+          action.action_type.toLowerCase().includes('purchase')
+        );
+        const conversions = purchaseActions.reduce((sum, action) => 
+          sum + parseInt(action.value || '0'), 0
+        );
+        if (conversions < filters.conversions.min || conversions > filters.conversions.max) return false;
+      }
+
+      // Quick filters
+      if (filters.showTopPerformers && ad.performance_score !== undefined && ad.performance_score < 80) return false;
+      if (filters.showLowPerformers && ad.performance_score !== undefined && ad.performance_score >= 40) return false;
+
+      return true;
+    });
+
+    // Sort the filtered results
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (filters.sortBy) {
+        case 'performance':
+          aValue = a.performance_score || 0;
+          bValue = b.performance_score || 0;
+          break;
+        case 'spend':
+          aValue = parseFloat(a.insights?.data?.[0]?.spend || '0');
+          bValue = parseFloat(b.insights?.data?.[0]?.spend || '0');
+          break;
+        case 'roas':
+          const aSpend = parseFloat(a.insights?.data?.[0]?.spend || '0');
+          const bSpend = parseFloat(b.insights?.data?.[0]?.spend || '0');
+          const aActionValues = a.insights?.data?.[0]?.action_values || [];
+          const bActionValues = b.insights?.data?.[0]?.action_values || [];
+          const aPurchaseValues = aActionValues.filter(action => 
+            action.action_type.toLowerCase().includes('purchase')
+          );
+          const bPurchaseValues = bActionValues.filter(action => 
+            action.action_type.toLowerCase().includes('purchase')
+          );
+          const aConversionValue = aPurchaseValues.reduce((sum, action) => 
+            sum + parseFloat(action.value || '0'), 0
+          );
+          const bConversionValue = bPurchaseValues.reduce((sum, action) => 
+            sum + parseFloat(action.value || '0'), 0
+          );
+          aValue = aSpend > 0 ? aConversionValue / aSpend : 0;
+          bValue = bSpend > 0 ? bConversionValue / bSpend : 0;
+          break;
+        case 'ctr':
+          aValue = parseFloat(a.insights?.data?.[0]?.ctr || '0');
+          bValue = parseFloat(b.insights?.data?.[0]?.ctr || '0');
+          break;
+        case 'clicks':
+          aValue = parseInt(a.insights?.data?.[0]?.clicks || '0');
+          bValue = parseInt(b.insights?.data?.[0]?.clicks || '0');
+          break;
+        case 'conversions':
+          const aActions = a.insights?.data?.[0]?.actions || [];
+          const bActions = b.insights?.data?.[0]?.actions || [];
+          const aPurchaseActions = aActions.filter(action => 
+            action.action_type.toLowerCase().includes('purchase')
+          );
+          const bPurchaseActions = bActions.filter(action => 
+            action.action_type.toLowerCase().includes('purchase')
+          );
+          aValue = aPurchaseActions.reduce((sum, action) => 
+            sum + parseInt(action.value || '0'), 0
+          );
+          bValue = bPurchaseActions.reduce((sum, action) => 
+            sum + parseInt(action.value || '0'), 0
+          );
+          break;
+        case 'name':
+          aValue = a.name || '';
+          bValue = b.name || '';
+          break;
+        default:
+          aValue = a.performance_score || 0;
+          bValue = b.performance_score || 0;
+      }
+
+      if (filters.sortOrder === 'asc') {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      }
+    });
+
+    return filtered;
+  };
+
+  const filteredAds = getFilteredAndSortedAds(allAds);
+  
+  // Filter states
+  const [filters, setFilters] = useState<AdFilters>({
+    searchText: '',
+    dateRange: { start: '', end: '' },
+    performanceScore: { min: 0, max: 100 },
+    spend: { min: 0, max: 10000 },
+    roas: { min: 0, max: 20 },
+    ctr: { min: 0, max: 10 },
+    clicks: { min: 0, max: 10000 },
+    conversions: { min: 0, max: 1000 },
+    sortBy: 'performance',
+    sortOrder: 'desc',
+    status: 'all',
+    showTopPerformers: false,
+    showLowPerformers: false,
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   // Helper function to get date range based on selection
   const getDateRange = (range: string) => {
@@ -682,15 +866,46 @@ export function Overview() {
 
         {/* Live Ads Section */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center glass-card">
-              <FiActivity className="w-4 h-4 text-white" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center glass-card">
+                <FiActivity className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-white">Live Ads</h2>
+              {loadingStates.liveAds && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              )}
             </div>
-            <h2 className="text-xl font-bold text-white">Live Ads</h2>
-            {loadingStates.liveAds && (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            )}
+            
+            {/* Filter Toggle Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                showFilters 
+                  ? 'bg-blue-500/20 border-blue-400/50 text-blue-300' 
+                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              <FiFilter className="w-4 h-4" />
+              <span className="text-sm font-medium">Filters</span>
+              {filteredAds.length !== allAds.length && (
+                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                  {filteredAds.length}
+                </span>
+              )}
+            </button>
           </div>
+          
+          {/* Filters Component */}
+          {showFilters && (
+            <Filters
+              filters={filters}
+              setFilters={setFilters}
+              setShowFilters={setShowFilters}
+              totalAds={allAds.length}
+              filteredCount={filteredAds.length}
+            />
+          )}
           
           {loadingStates.liveAds ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -704,7 +919,7 @@ export function Overview() {
             </div>
           ) : allAds.length > 0 ? (
             <InfiniteAdsList
-              ads={allAds}
+              ads={filteredAds}
               dateRange={selectedTimeRange}
               onLoadMore={loadMoreAds}
               hasMore={hasMoreAds}

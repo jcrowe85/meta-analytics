@@ -1,0 +1,20 @@
+{
+  "watch": ["server.js", "services/", "routes/"],
+  "ignore": [
+    "cache/",
+    "logs/",
+    "*.log",
+    "node_modules/",
+    "src/",
+    "dist/",
+    "*.cache",
+    "cache.json",
+    "logs/**/*",
+    "**/*.log",
+    "**/cache/**",
+    "**/logs/**"
+  ],
+  "ext": "js,json",
+  "delay": 2000,
+  "verbose": false
+}

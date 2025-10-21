@@ -67,9 +67,6 @@ export function Overview() {
   
   // Filter and sort ads based on current filters
   const getFilteredAndSortedAds = (ads: AdData[]) => {
-    console.log('🔍 Total ads before filtering:', ads.length);
-    console.log('🔍 Sample ad structure:', ads[0]);
-    
     let filtered = ads.filter((ad) => {
       // Search text filter
       if (filters.searchText) {
@@ -227,12 +224,10 @@ export function Overview() {
       }
     });
 
-    console.log('🔍 Filtered ads count:', filtered.length);
     return filtered;
   };
 
   const filteredAds = getFilteredAndSortedAds(allAds);
-  console.log('🔍 Final filtered ads:', filteredAds.length);
   
   // Filter states
   const [filters, setFilters] = useState<AdFilters>({

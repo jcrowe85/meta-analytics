@@ -65,6 +65,24 @@ export function Overview() {
   // Track if any data has loaded to show the page
   const [hasLoadedData, setHasLoadedData] = useState(false);
   
+  // Filter states
+  const [filters, setFilters] = useState<AdFilters>({
+    searchText: '',
+    dateRange: { start: '', end: '' },
+    performanceScore: { min: 0, max: 100 },
+    spend: { min: 0, max: 100000 }, // Increased max spend
+    roas: { min: 0, max: 100 }, // Increased max ROAS
+    ctr: { min: 0, max: 100 }, // Increased max CTR
+    clicks: { min: 0, max: 100000 }, // Increased max clicks
+    conversions: { min: 0, max: 10000 }, // Increased max conversions
+    sortBy: 'performance',
+    sortOrder: 'desc',
+    status: 'all',
+    showTopPerformers: false,
+    showLowPerformers: false,
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
   // Filter and sort ads based on current filters
   const getFilteredAndSortedAds = (ads: AdData[]) => {
     let filtered = ads.filter((ad) => {
@@ -228,24 +246,6 @@ export function Overview() {
   };
 
   const filteredAds = getFilteredAndSortedAds(allAds);
-  
-  // Filter states
-  const [filters, setFilters] = useState<AdFilters>({
-    searchText: '',
-    dateRange: { start: '', end: '' },
-    performanceScore: { min: 0, max: 100 },
-    spend: { min: 0, max: 100000 }, // Increased max spend
-    roas: { min: 0, max: 100 }, // Increased max ROAS
-    ctr: { min: 0, max: 100 }, // Increased max CTR
-    clicks: { min: 0, max: 100000 }, // Increased max clicks
-    conversions: { min: 0, max: 10000 }, // Increased max conversions
-    sortBy: 'performance',
-    sortOrder: 'desc',
-    status: 'all',
-    showTopPerformers: false,
-    showLowPerformers: false,
-  });
-  const [showFilters, setShowFilters] = useState(false);
 
   // Helper function to get date range based on selection
   const getDateRange = (range: string) => {

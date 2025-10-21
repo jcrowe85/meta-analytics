@@ -85,16 +85,6 @@ export function Overview() {
 
   // Filter and sort ads based on current filters
   const getFilteredAndSortedAds = (ads: AdData[]) => {
-    console.log('🔍 Filtering ads:', { 
-      totalAds: ads.length, 
-      filters,
-      sampleAd: ads[0] ? {
-        id: ads[0].id,
-        name: ads[0].name,
-        performance_score: ads[0].performance_score,
-        insights: ads[0].insights ? 'exists' : 'null'
-      } : 'no ads'
-    });
     let filtered = ads.filter((ad) => {
       // Search text filter
       if (filters.searchText) {
@@ -264,23 +254,6 @@ export function Overview() {
       }
     });
 
-    console.log('✅ Filtered result:', { 
-      originalCount: ads.length, 
-      filteredCount: filtered.length,
-      filtersApplied: {
-        searchText: !!filters.searchText,
-        dateRange: !!(filters.dateRange.start || filters.dateRange.end),
-        performanceScore: filters.performanceScore.min > 0 || filters.performanceScore.max < 100,
-        spend: filters.spend.min > 0 || filters.spend.max < 100000,
-        roas: filters.roas.min > 0 || filters.roas.max < 100,
-        ctr: filters.ctr.min > 0 || filters.ctr.max < 100,
-        clicks: filters.clicks.min > 0 || filters.clicks.max < 100000,
-        conversions: filters.conversions.min > 0 || filters.conversions.max < 10000,
-        status: filters.status !== 'all',
-        showTopPerformers: filters.showTopPerformers,
-        showLowPerformers: filters.showLowPerformers
-      }
-    });
     return filtered;
   };
 

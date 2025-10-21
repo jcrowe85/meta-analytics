@@ -81,59 +81,61 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
     step?: number;
     format?: (value: number) => string;
     onChange: (range: { min: number; max: number }) => void;
-  }) => (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <label className="text-sm font-medium text-white/80">{label}</label>
-        <span className="text-sm text-white/60">
-          {format(value.min)} - {format(value.max)}
-        </span>
+  }) => {
+    const handleMinChange = (newMin: number) => {
+      const clampedMin = Math.min(newMin, value.max);
+      onChange({ min: clampedMin, max: value.max });
+    };
+
+    const handleMaxChange = (newMax: number) => {
+      const clampedMax = Math.max(newMax, value.min);
+      onChange({ min: value.min, max: clampedMax });
+    };
+
+    return (
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-medium text-white/80">{label}</label>
+          <span className="text-sm text-white/60">
+            {format(value.min)} - {format(value.max)}
+          </span>
+        </div>
+        
+        {/* Min Range Input */}
+        <div className="space-y-1">
+          <label className="text-xs text-white/60">Min: {format(value.min)}</label>
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value.min}
+            onChange={(e) => handleMinChange(Number(e.target.value))}
+            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+          />
+        </div>
+        
+        {/* Max Range Input */}
+        <div className="space-y-1">
+          <label className="text-xs text-white/60">Max: {format(value.max)}</label>
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value.max}
+            onChange={(e) => handleMaxChange(Number(e.target.value))}
+            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+          />
+        </div>
+        
+        <div className="flex justify-between text-xs text-white/50">
+          <span>{format(min)}</span>
+          <span>{format(max)}</span>
+        </div>
       </div>
-      
-      {/* Min Range Input */}
-      <div className="space-y-1">
-        <label className="text-xs text-white/60">Min: {format(value.min)}</label>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value.min}
-          onChange={(e) => {
-            const newMin = Number(e.target.value);
-            if (newMin <= value.max) {
-              onChange({ min: newMin, max: value.max });
-            }
-          }}
-          className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
-        />
-      </div>
-      
-      {/* Max Range Input */}
-      <div className="space-y-1">
-        <label className="text-xs text-white/60">Max: {format(value.max)}</label>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value.max}
-          onChange={(e) => {
-            const newMax = Number(e.target.value);
-            if (newMax >= value.min) {
-              onChange({ min: value.min, max: newMax });
-            }
-          }}
-          className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
-        />
-      </div>
-      
-      <div className="flex justify-between text-xs text-white/50">
-        <span>{format(min)}</span>
-        <span>{format(max)}</span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="mb-6">

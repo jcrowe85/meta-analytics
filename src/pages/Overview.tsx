@@ -85,7 +85,6 @@ export function Overview() {
 
   // Filter and sort ads based on current filters
   const getFilteredAndSortedAds = (ads: AdData[]) => {
-    console.log('Filtering ads:', { totalAds: ads.length, filters });
     let filtered = ads.filter((ad) => {
       // Search text filter
       if (filters.searchText) {
@@ -112,55 +111,67 @@ export function Overview() {
         if (filters.status === 'paused' && ad.effective_status !== 'PAUSED') return false;
       }
 
-      // Performance score filter (only if performance_score exists)
+      // Performance score filter (only if performance_score exists and is not default range)
       if (ad.performance_score !== undefined && ad.performance_score !== null) {
-        if (ad.performance_score < filters.performanceScore.min || ad.performance_score > filters.performanceScore.max) return false;
-      }
-
-      // Spend filter (only if spend data exists)
-      if (ad.insights?.data?.[0]?.spend !== undefined && ad.insights.data[0].spend !== null) {
-        const spend = parseFloat(ad.insights.data[0].spend);
-        if (!isNaN(spend) && (spend < filters.spend.min || spend > filters.spend.max)) return false;
-      }
-
-      // ROAS filter (calculated from spend and action_values) - only if both exist
-      if (ad.insights?.data?.[0]?.spend !== undefined && ad.insights.data[0].spend !== null) {
-        const spend = parseFloat(ad.insights.data[0].spend);
-        if (!isNaN(spend) && spend > 0) {
-          const actionValues = ad.insights.data[0].action_values || [];
-          const purchaseValues = actionValues.filter(action => 
-            action.action_type.toLowerCase().includes('purchase')
-          );
-          const totalConversionValue = purchaseValues.reduce((sum, action) => 
-            sum + parseFloat(action.value || '0'), 0
-          );
-          const roas = totalConversionValue / spend;
-          if (!isNaN(roas) && (roas < filters.roas.min || roas > filters.roas.max)) return false;
+        if (filters.performanceScore.min > 0 || filters.performanceScore.max < 100) {
+          if (ad.performance_score < filters.performanceScore.min || ad.performance_score > filters.performanceScore.max) return false;
         }
       }
 
-      // CTR filter (only if CTR data exists)
+      // Spend filter (only if spend data exists and is not default range)
+      if (ad.insights?.data?.[0]?.spend !== undefined && ad.insights.data[0].spend !== null) {
+        if (filters.spend.min > 0 || filters.spend.max < 100000) {
+          const spend = parseFloat(ad.insights.data[0].spend);
+          if (!isNaN(spend) && (spend < filters.spend.min || spend > filters.spend.max)) return false;
+        }
+      }
+
+      // ROAS filter (calculated from spend and action_values) - only if both exist and is not default range
+      if (ad.insights?.data?.[0]?.spend !== undefined && ad.insights.data[0].spend !== null) {
+        if (filters.roas.min > 0 || filters.roas.max < 100) {
+          const spend = parseFloat(ad.insights.data[0].spend);
+          if (!isNaN(spend) && spend > 0) {
+            const actionValues = ad.insights.data[0].action_values || [];
+            const purchaseValues = actionValues.filter(action => 
+              action.action_type.toLowerCase().includes('purchase')
+            );
+            const totalConversionValue = purchaseValues.reduce((sum, action) => 
+              sum + parseFloat(action.value || '0'), 0
+            );
+            const roas = totalConversionValue / spend;
+            if (!isNaN(roas) && (roas < filters.roas.min || roas > filters.roas.max)) return false;
+          }
+        }
+      }
+
+      // CTR filter (only if CTR data exists and is not default range)
       if (ad.insights?.data?.[0]?.ctr !== undefined && ad.insights.data[0].ctr !== null) {
-        const ctr = parseFloat(ad.insights.data[0].ctr);
-        if (!isNaN(ctr) && (ctr < filters.ctr.min || ctr > filters.ctr.max)) return false;
+        if (filters.ctr.min > 0 || filters.ctr.max < 100) {
+          const ctr = parseFloat(ad.insights.data[0].ctr);
+          if (!isNaN(ctr) && (ctr < filters.ctr.min || ctr > filters.ctr.max)) return false;
+        }
       }
 
-      // Clicks filter (only if clicks data exists)
+      // Clicks filter (only if clicks data exists and is not default range)
       if (ad.insights?.data?.[0]?.clicks !== undefined && ad.insights.data[0].clicks !== null) {
-        const clicks = parseInt(ad.insights.data[0].clicks);
-        if (!isNaN(clicks) && (clicks < filters.clicks.min || clicks > filters.clicks.max)) return false;
+        if (filters.clicks.min > 0 || filters.clicks.max < 100000) {
+          const clicks = parseInt(ad.insights.data[0].clicks);
+          if (!isNaN(clicks) && (clicks < filters.clicks.min || clicks > filters.clicks.max)) return false;
+        }
       }
 
-      // Conversions filter (from actions) - only if actions exist
+      // Conversions filter (from actions) - only if actions exist and is not default range
       if (ad.insights?.data?.[0]?.actions !== undefined && ad.insights.data[0].actions !== null) {
-        const actions = ad.insights.data[0].actions || [];
-        const purchaseActions = actions.filter(action => 
-          action.action_type.toLowerCase().includes('purchase')
-        );
-        const conversions = purchaseActions.reduce((sum, action) => 
-          sum + parseInt(action.value || '0'), 0
-        );
-        if (!isNaN(conversions) && (conversions < filters.conversions.min || conversions > filters.conversions.max)) return false;
+        if (filters.conversions.min > 0 || filters.conversions.max < 10000) {
+          const actions = ad.insights.data[0].actions || [];
+          const purchaseActions = actions.filter(action => 
+            action.action_type.toLowerCase().includes('purchase')
+          );
+          const conversions = purchaseActions.reduce((sum, action) => 
+            sum + parseInt(action.value || '0'), 0
+          );
+          if (!isNaN(conversions) && (conversions < filters.conversions.min || conversions > filters.conversions.max)) return false;
+        }
       }
 
       // Quick filters
@@ -243,7 +254,6 @@ export function Overview() {
       }
     });
 
-    console.log('Filtered result:', { filteredCount: filtered.length });
     return filtered;
   };
 

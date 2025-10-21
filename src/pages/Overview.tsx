@@ -145,7 +145,7 @@ export function Overview() {
         { key: 'account', url: `/api/meta/account?${cacheBuster}`, handler: handleAccountData },
         { key: 'ads', url: `/api/meta/ads?limit=50&${dateRangeParam}${cacheBuster}`, handler: handleAdsData },
         { key: 'spend', url: `/api/meta/today-spend?${dateRangeParam}${cacheBuster}`, handler: handleSpendData },
-        { key: 'liveAds', url: `/api/meta/ads?status=ACTIVE&limit=8&${dateRangeParam}${cacheBuster}`, handler: handleLiveAdsData },
+        { key: 'liveAds', url: `/api/meta/ads?status=ACTIVE&limit=50&${dateRangeParam}${cacheBuster}`, handler: handleLiveAdsData },
         { key: 'roas', url: `/api/roas?${dateRangeParam}${cacheBuster}`, handler: handleRoasData }
       ];
       

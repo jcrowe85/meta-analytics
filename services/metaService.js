@@ -18,12 +18,20 @@ class MetaService {
     // Request throttling
     this.requestQueue = [];
     this.isProcessingQueue = false;
-        this.maxConcurrentRequests = 3; // Limit concurrent requests
-        this.requestDelay = 50; // 50ms between requests
+    this.maxConcurrentRequests = 5; // Increased concurrent requests
+    this.requestDelay = 25; // Reduced delay between requests
     this.lastRequestTime = 0;
     
     // Cache file path for persistence
     this.cacheFile = path.join(__dirname, '..', 'cache', 'meta-cache.json');
+    
+    // Extended cache duration for ad insights (10 minutes)
+    this.cacheDurations = {
+      'default': 120000, // 2 minutes
+      'ad_insights': 600000, // 10 minutes for ad insights
+      'account': 300000, // 5 minutes for account data
+      'ads_list': 300000 // 5 minutes for ads list
+    };
     
     // Load cache from file on startup
     this.loadCacheFromFile();
@@ -86,7 +94,7 @@ class MetaService {
   }
 
   setCache(cacheKey, data, cacheType = 'default') {
-    const duration = this.cacheDurations[cacheType] || this.cacheDurations.ads;
+    const duration = this.cacheDurations[cacheType] || this.cacheDurations.default;
     const expiry = Date.now() + duration;
     
     this.cache.set(cacheKey, data);
@@ -1020,7 +1028,7 @@ class MetaService {
             params._t = _t;
           }
           
-              const response = await this.makeRequest(endpoint, params, `ad_insights_${approach.name}_${adId}`);
+              const response = await this.makeRequest(endpoint, params, 'ad_insights');
               
               if (response.data) {
                 const data = response.data[0] || {};

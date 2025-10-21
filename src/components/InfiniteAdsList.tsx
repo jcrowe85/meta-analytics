@@ -23,6 +23,7 @@ const InfiniteAdsList: React.FC<InfiniteAdsListProps> = ({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [insightsQueue, setInsightsQueue] = useState<string[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0 });
 
   // Reset insights when date range changes
   useEffect(() => {
@@ -30,6 +31,7 @@ const InfiniteAdsList: React.FC<InfiniteAdsListProps> = ({
     setLoadingInsights(new Set());
     setInsightsQueue([]);
     setIsProcessingQueue(false);
+    setLoadingProgress({ loaded: 0, total: 0 });
   }, [dateRange]);
 
   // Process insights queue with throttling
@@ -44,31 +46,39 @@ const InfiniteAdsList: React.FC<InfiniteAdsListProps> = ({
     
     setIsProcessingQueue(true);
     
-    // Process up to 3 ads in parallel
-    const batchSize = 3;
+    // Set total count for progress tracking
+    const totalAds = insightsQueue.length;
+    setLoadingProgress({ loaded: 0, total: totalAds });
+    
+    // Process up to 5 ads in parallel for better performance
+    const batchSize = 5;
     const batches = [];
     
     for (let i = 0; i < insightsQueue.length; i += batchSize) {
       batches.push(insightsQueue.slice(i, i + batchSize));
     }
     
+    let loadedCount = 0;
+    
     for (const batch of batches) {
       // Process batch in parallel
       const promises = batch.map(async (adId, index) => {
         if (adId && !loadedInsights.has(adId) && !loadingInsights.has(adId)) {
-          // Small stagger within batch
+          // Reduced stagger within batch
           if (index > 0) {
-            await new Promise(resolve => setTimeout(resolve, index * 25)); // 25ms stagger
+            await new Promise(resolve => setTimeout(resolve, index * 15)); // 15ms stagger
           }
           await loadAdInsights(adId);
+          loadedCount++;
+          setLoadingProgress({ loaded: loadedCount, total: totalAds });
         }
       });
       
       await Promise.all(promises);
       
-      // Small delay between batches
+      // Reduced delay between batches
       if (batches.indexOf(batch) < batches.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms between batches
+        await new Promise(resolve => setTimeout(resolve, 50)); // 50ms between batches
       }
     }
     
@@ -432,6 +442,24 @@ const InfiniteAdsList: React.FC<InfiniteAdsListProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Loading Progress Indicator */}
+      {loadingProgress.total > 0 && loadingProgress.loaded < loadingProgress.total && (
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-white/80">Loading ad insights...</span>
+            <span className="text-sm text-white/60">
+              {loadingProgress.loaded} / {loadingProgress.total}
+            </span>
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-2">
+            <div 
+              className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${(loadingProgress.loaded / loadingProgress.total) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+      
       {/* Ads Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {ads.map((ad) => {

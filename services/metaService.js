@@ -860,7 +860,7 @@ class MetaService {
   async getAdsData({ dateRange = '30d', limit = 50, status, fields, startDate, endDate, _t }) {
     const endpoint = `${this.adAccountId}/ads`;
     
-        // Don't include insights in the main request - get them individually for date-specific data
+        // Include basic insights for filtering purposes - get detailed insights individually for date-specific data
         const defaultFields = [
           'id',
           'name', 
@@ -868,7 +868,8 @@ class MetaService {
           'effective_status',
           'created_time',
           'updated_time',
-          'creative{id,thumbnail_url,image_url,object_story_spec{link_data{image_hash},photo_data{image_hash}},body,title,object_type,image_hash,effective_object_story_id}'
+          'creative{id,thumbnail_url,image_url,object_story_spec{link_data{image_hash},photo_data{image_hash}},body,title,object_type,image_hash,effective_object_story_id}',
+          'insights{spend,impressions,clicks,cpm,cpc,ctr,actions,action_values}'
         ];
 
     // Handle custom date range
@@ -887,7 +888,8 @@ class MetaService {
 
         const requestParams = {
           fields: fields || defaultFields.join(','),
-          limit
+          limit,
+          time_range: JSON.stringify(timeRange)
         };
 
     // Add cache busting parameter if provided
@@ -904,7 +906,7 @@ class MetaService {
         
         const response = await this.makeRequest(endpoint, requestParams, 'ads');
         
-        // Process basic ad data without insights
+        // Process basic ad data with insights for filtering
         return this.processBasicAdsData(response.data || []);
   }
 
@@ -965,10 +967,10 @@ class MetaService {
           thumbnail_url: imageUrl,
           image_source: imageSource // Track where the image came from
         } : null,
-        // No insights data - will be loaded separately
-        insights: null,
-        metrics: null,
-        performance_score: null,
+        // Process insights data for filtering
+        insights: ad.insights ? this.processAdInsightsData(ad.insights) : null,
+        metrics: ad.insights ? this.processAdInsightsData(ad.insights) : null,
+        performance_score: ad.insights ? this.calculatePerformanceScore(ad.insights) : null,
         status_color: this.getStatusColor(ad.effective_status)
       };
     });

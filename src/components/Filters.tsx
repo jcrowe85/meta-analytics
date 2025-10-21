@@ -82,39 +82,52 @@ function Filters({ filters, setFilters, setShowFilters, totalAds, filteredCount 
     format?: (value: number) => string;
     onChange: (range: { min: number; max: number }) => void;
   }) => (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex justify-between items-center">
         <label className="text-sm font-medium text-white/80">{label}</label>
         <span className="text-sm text-white/60">
           {format(value.min)} - {format(value.max)}
         </span>
       </div>
-      <div className="relative">
+      
+      {/* Min Range Input */}
+      <div className="space-y-1">
+        <label className="text-xs text-white/60">Min: {format(value.min)}</label>
         <input
           type="range"
           min={min}
           max={max}
           step={step}
           value={value.min}
-          onChange={(e) => onChange({ min: Number(e.target.value), max: value.max })}
-          className="absolute w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
-          style={{
-            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((value.min - min) / (max - min)) * 100}%, #374151 ${((value.min - min) / (max - min)) * 100}%, #374151 100%)`
+          onChange={(e) => {
+            const newMin = Number(e.target.value);
+            if (newMin <= value.max) {
+              onChange({ min: newMin, max: value.max });
+            }
           }}
+          className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
         />
+      </div>
+      
+      {/* Max Range Input */}
+      <div className="space-y-1">
+        <label className="text-xs text-white/60">Max: {format(value.max)}</label>
         <input
           type="range"
           min={min}
           max={max}
           step={step}
           value={value.max}
-          onChange={(e) => onChange({ min: value.min, max: Number(e.target.value) })}
-          className="absolute w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer slider"
-          style={{
-            background: `linear-gradient(to right, transparent 0%, transparent ${((value.max - min) / (max - min)) * 100}%, #3b82f6 ${((value.max - min) / (max - min)) * 100}%, #3b82f6 100%)`
+          onChange={(e) => {
+            const newMax = Number(e.target.value);
+            if (newMax >= value.min) {
+              onChange({ min: value.min, max: newMax });
+            }
           }}
+          className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
         />
       </div>
+      
       <div className="flex justify-between text-xs text-white/50">
         <span>{format(min)}</span>
         <span>{format(max)}</span>

@@ -85,6 +85,7 @@ export function Overview() {
 
   // Filter and sort ads based on current filters
   const getFilteredAndSortedAds = (ads: AdData[]) => {
+    console.log('Filtering ads:', { totalAds: ads.length, filters });
     let filtered = ads.filter((ad) => {
       // Search text filter
       if (filters.searchText) {
@@ -242,6 +243,7 @@ export function Overview() {
       }
     });
 
+    console.log('Filtered result:', { filteredCount: filtered.length });
     return filtered;
   };
 
